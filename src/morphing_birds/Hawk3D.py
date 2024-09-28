@@ -7,84 +7,14 @@ from matplotlib.animation import FuncAnimation
 from PIL import Image
 import io
 
+from .hawk_skeleton_definition import HawkSkeletonDefinition
+
 
 class Hawk3D:
-    # Class attributes
-    right_marker_names = [
-        "right_wingtip", 
-        "right_primary", 
-        "right_secondary",
-        "right_tailtip"]
-    
-    left_marker_names = [
-        "left_wingtip", 
-        "left_primary", 
-        "left_secondary",
-        "left_tailtip"]
-    
-    marker_names = [
-        "left_wingtip",   "right_wingtip", 
-        "left_primary",   "right_primary", 
-        "left_secondary", "right_secondary", 
-        "left_tailtip",   "right_tailtip"]
-    
-    fixed_marker_names = [
-        "left_shoulder", 
-        "left_tailbase", 
-        "right_tailbase", 
-        "right_shoulder",
-        "hood", 
-        "tailpack"
-    ]
-    
-    body_sections = {
-        "left_handwing": [
-            "left_wingtip", 
-            "left_primary", 
-            "left_secondary",
-        ],
-        "right_handwing": [
-            "right_wingtip", 
-            "right_primary", 
-            "right_secondary",
-        ],
-        "left_armwing": [
-            "left_primary", 
-            "left_secondary", 
-            "left_tailbase", 
-            "left_shoulder",
-        ],
-        "right_armwing": [
-            "right_primary", 
-            "right_secondary", 
-            "right_tailbase",
-            "right_shoulder",
-        ],
-        "body": [
-            "right_shoulder", 
-            "left_shoulder", 
-            "left_tailbase", 
-            "right_tailbase",
-        ],
-        "head": [
-            "right_shoulder", 
-            "hood", 
-            "left_shoulder",
-        ],
-        "tail": [
-            "right_tailtip", 
-            "left_tailtip", 
-            "left_tailbase", 
-            "right_tailbase",
-        ],
-    }
-
     def __init__(self, csv_path):
-        """
-        Initialise the Hawk3D class.
-        Loads default keypoint shape from external csv file. 
-        Initialises polygon shapes drawn from the keypoints. 
-        """
+        
+        self.skeleton_definition = HawkSkeletonDefinition()
+
         # Create default shape from loaded csv file. 
         self.load_and_initialise_keypoints(csv_path)
 
@@ -139,10 +69,11 @@ class Hawk3D:
             return csv_marker_names
 
     def define_indices(self):
-        self.right_marker_index = self.get_keypoint_indices(self.right_marker_names)
-        self.left_marker_index  = self.get_keypoint_indices(self.left_marker_names)
-        self.marker_index       = self.get_keypoint_indices(self.marker_names)
-        self.fixed_marker_index = self.get_keypoint_indices(self.fixed_marker_names)
+        self.right_marker_index = self.skeleton_definition.get_keypoint_indices("right_handwing")
+        self.left_marker_index  = self.skeleton_definition.get_keypoint_indices("left_handwing")
+        all_marker_names = self.skeleton_definition.get_all_marker_names()
+        self.marker_index = list(range(len(all_marker_names)))
+        self.fixed_marker_index = [all_marker_names.index(name) for name in self.skeleton_definition.fixed_marker_names]
 
     def get_keypoint_indices(self,names_to_find=None):
         """
