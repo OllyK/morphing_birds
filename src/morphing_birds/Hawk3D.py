@@ -48,6 +48,8 @@ class Hawk3D(Animal3D):
             keypoints = self.get_csv_keypoints(data)
             self.validate_keypoints(keypoints)
 
+            print(keypoints.shape)
+
             self.default_shape = keypoints[0]
             self.current_shape = self.default_shape.copy()
             self.untransformed_shape = self.default_shape.copy()
