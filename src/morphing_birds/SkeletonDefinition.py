@@ -1,6 +1,28 @@
 import numpy as np
 
 class SkeletonDefinition:
+    """
+    The SkeletonDefinition class serves as a blueprint for defining the shape ("skeleton") of an animal.
+
+    It encapsulates the concept of markers, which are moving points of reference on the animal, and body sections, 
+    which group these markers into meaningful anatomical parts. Fixed markers are those that do not move during 
+    animation but might help with visualisation. 
+
+    Attributes:
+    - marker_names (list): A list of all marker names that represent key points on the skeleton.
+    - fixed_marker_names (list): A list of marker names that are fixed and do not change position.
+    - body_sections (dict): A dictionary that maps body section names to their corresponding marker names.
+
+    Methods:
+    - get_marker_indices(marker_subset, csv_marker_names): Retrieves the indices of specified markers from a 
+      given list of marker names.
+    - get_body_section_indices(csv_marker_names): Returns a mapping of body sections to their respective 
+      marker indices, ensuring that all markers are accounted for.
+
+    This class is designed to be extended by specific animal skeleton definitions, allowing for tailored 
+    implementations while maintaining a consistent interface.
+    """
+
     def __init__(self, marker_names: list, fixed_marker_names: list, body_sections: dict):
         """
         Initializes the SkeletonDefinition with marker names and body sections.

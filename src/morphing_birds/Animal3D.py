@@ -1,46 +1,68 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import ipywidgets as widgets
-from IPython.display import display, clear_output
-from matplotlib.animation import FuncAnimation
-from PIL import Image
-import io
+
+"""
+The `Animal3D` class is designed to represent a 3D model of an animal's skeleton, 
+and it relies on the `SkeletonDefinition` class to define the structure and 
+characteristics of that skeleton. 
+
+By using `SkeletonDefinition`, `Animal3D` can access essential information about 
+the markers that represent key anatomical points on the animal, as well as the 
+relationships between these markers. This allows for a more organised and 
+systematic approach to handling the animal's shape.
+
+The `SkeletonDefinition` class serves as a blueprint, providing the necessary 
+methods and attributes to manage the markers and body sections. This design 
+promotes code reusability and ensures that the `Animal3D` class can easily 
+adapt to different animal types by simply changing the skeleton definition 
+used during initialisation.
+
+In summary, `Animal3D` is a higher-level class that utilises the foundational 
+capabilities of `SkeletonDefinition` to create a comprehensive representation 
+of an animal's 3D structure, enabling various functionalities such as 
+loading keypoints, transforming shapes, and visualising the model.
+"""
+
+
 
 class Animal3D:
     """
     A class representing a 3D model of an animal.
 
     This class provides functionality to load, manipulate, and visualise
-    3D keypoints representing a biomechanical shape ("skeleton"). It inherits from
-    the HawkSkeletonDefinition class, which defines the basic outline structure.
-
+    3D keypoints representing a biomechanical shape ("skeleton"). 
+    
     The Animal3D class allows users to:
-    1. Load keypoint data from a CSV file
-    2. Transform the keypoints (e.g., rotate, translate)
-    3. Visualise the animal model in 3D
-    4. Animate the model
-    5. Run PCA on the keypoints and animate the principal components.
+
+    - Make sure all the markers are initialised with the correct index from the data source.
+    - Define the polygons that make up the body sections of the animal
+    - Retrieve the coordinates of these polygons for plotting.
+    - Allow the user to update the keypoints with new values and change the shape of the animal.
+    - Allow the user to translate the keypoints in a horizontal or vertical direction.
+    - Allow the user to rotate the keypoints in the x, y and z directions (whole body pitch, yaw and roll)
+    - Reset any transformations
+    - Restore the keypoints to the original loaded shape
+    - Mirror the keypoints across the y-axis, so the right side defines the left side.
+    - Make the keypoints array 3D if they are not already, so [n,3] becomes [m,n,3] where n is the number of markers.
+        - This is necessary for animations, where m is the number of frames.
 
 
     Attributes:
-        skeleton_definition (SkeletonDefinition): Defines the animal's outline (skeleton) structure
-        right_marker_names (list): Names of markers on the right side of the animal
-        left_marker_names (list): Names of markers on the left side of the animal
-        csv_marker_names (list): Names of markers as they appear in the CSV file
+        skeleton_definition (SkeletonDefinition): Defines the animal's shape (skeleton) structure
+        csv_marker_names (list): Names of markers as they appear in the CSV file, the order that define the indices
+        marker_index (list): Index for moving markers
+        fixed_marker_index (list): Index for fixed markers
+        right_marker_index (list): Index for moving markers on the right side of the animal
+        left_marker_index (list): Index for moving markers on the left side of the animal
+        polygons (dict): Dictionary of which marker names that make up the polyons for body sections of the animal
+        body_section_indices (dict): Dictionary of which markers (using an index) make up the polygons of the animal
         default_shape (numpy.ndarray): The original keypoint positions loaded from the CSV
         current_shape (numpy.ndarray): The current (possibly transformed) keypoint positions
-        transformation_matrix (numpy.ndarray): 4x4 matrix representing current transformations
+        transformation_matrix (numpy.ndarray): 4x4 matrix representing current transformations including rotations
         origin (numpy.ndarray): The origin point for transformations
         untransformed_shape (numpy.ndarray): A copy of the original keypoint positions
     """
     def __init__(self, skeleton_definition):
-        """
-        Initializes the Animal3D class with the given CSV file path.
 
-        Parameters:
-        - csv_path (str): Path to the CSV file containing the animal's keypoints.
-        """
         self.skeleton_definition = skeleton_definition
 
         # Initialize marker indices
@@ -88,9 +110,9 @@ class Animal3D:
             self.skeleton_definition.get_left_marker_names(), csv_marker_names
         )
 
-    def init_polygons(self, body_sections, csv_marker_names):
+    def init_polygons(self, csv_marker_names):
         """
-        Initializes polygon definitions based on body sections and their corresponding marker indices.
+        Initializes polygon definitions based on body sections in the skeleton definition and their corresponding marker indices.
         """
         self.body_section_indices = self.skeleton_definition.get_body_section_indices(csv_marker_names)
         self.polygons = {}
@@ -119,17 +141,24 @@ class Animal3D:
         return coords
         
 
+    def reshape_keypoints_to_3d(self, keypoints):
+        """
+        Reshapes the keypoints to 3D if they are not already.
+        """
+        if len(np.shape(keypoints)) == 2:
+            keypoints = keypoints.reshape(1, -1, 3)
+        return keypoints
+
     def validate_keypoints(self, keypoints):
         """
-        Validates the keypoints, ensuring they are three-dimensional and reshapes/mirrors them if necessary.
+        Validates the keypoints, ensuring they are three-dimensional and reshapes them if necessary.
 
         Parameters:
         - keypoints (numpy.ndarray): The keypoints array to validate.
 
         Returns:
-        - numpy.ndarray: The validated and potentially reshaped and mirrored keypoints.
+        - numpy.ndarray: The validated and potentially reshaped keypoints.
         """
-
         if keypoints.size == 0:
             raise ValueError("No keypoints provided.")
         
@@ -137,21 +166,13 @@ class Animal3D:
         if keypoints.shape[-1] != 3:
             raise ValueError("Keypoints must be in 3D space.")
         
-        # expected_markers = len(self.skeleton_definition.marker_names)
-        # if keypoints.shape[0] != expected_markers:
-        #     raise ValueError(f"Expected {expected_markers} markers, but got {keypoints.shape[0]}.")
-
-        # If [4,3] or [8,3] is given, reshape to [1,4,3] or [1,8,3]
-        if len(np.shape(keypoints)) == 2:
+        # If the array is in 2d, make it 3d, e.g. [8,3] becomes [1,8,3]
+        if len(keypoints.shape) == 2:
             keypoints = keypoints.reshape(1, -1, 3)
-
-        # If [1,4,3] is given, mirror it to make [1,8,3]
-        if keypoints.shape[1] == len(self.right_marker_names):
-            keypoints = self.mirror_keypoints(keypoints)
 
         return keypoints
 
-    def mirror_keypoints(self,keypoints):
+    def mirror_keypoints(self, keypoints):
         """
         Mirrors keypoints across the y-axis to create a symmetrical set.
 
@@ -334,6 +355,16 @@ class Animal3D:
         return self.current_shape[:,right_marker_index,:]
     
     @property
+    def left_markers(self):
+        """
+        Returns the left side markers.
+        """
+        
+        left_marker_index = self.left_marker_index
+        
+        return self.current_shape[:,left_marker_index,:]
+    
+    @property
     def default_markers(self):
         """
         Returns the default markers.
@@ -353,6 +384,15 @@ class Animal3D:
         
         return self.default_shape[:,right_marker_index,:]
 
+    @property
+    def default_left_markers(self):
+        """
+        Returns the right side markers.
+        """
+        
+        left_marker_index = self.left_marker_index
+        
+        return self.default_shape[:,left_marker_index,:]
 
 
      

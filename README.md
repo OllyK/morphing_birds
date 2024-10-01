@@ -1,12 +1,27 @@
 # Morphing Birds
 
-Initial version.
 
-[![Actions Status][actions-badge]][actions-link]
-[![PyPI version][pypi-version]][pypi-link]
-[![PyPI platforms][pypi-platforms]][pypi-link]
+### SkeletonDefinition
 
-Package to plot and animate a hawk shape. Loads a default shape and produces polygons. 
+This is like a blueprint for an animal's skeleton. It defines the basic structure that any animal model should have, such as marker names and body sections.
+
+#### HawkSkeletonDefinition
+
+This is a specific blueprint for a hawk's skeleton. It inherits from SkeletonDefinition and adds hawk-specific details. Think of it as a specialized version of the general blueprint, tailored for hawks.
+
+### Animal3D
+
+This is the main class and general-purpose for creating and manipulating 3D animal models. It uses a SkeletonDefinition to know how to structure the animal.
+
+#### Hawk3D
+
+This is a specialised version of Animal3D, specifically for hawks. Hawk3D inherits from Animal3D and uses HawkSkeletonDefinition for hawk-specific details.
+
+### AnimalPlotter
+This is a tool for visualising the animal models statically. It works with any Animal3D object (including Hawk3D).
+
+### AnimalAnimate
+This is a tool for creating animations of the animal models. It also works with any Animal3D object (including Hawk3D).
 
 
 ## Installation

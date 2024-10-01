@@ -22,7 +22,7 @@ class Hawk3D(Animal3D):
         self.right_marker_names = self.skeleton_definition.get_right_marker_names()
         self.left_marker_names = self.skeleton_definition.get_left_marker_names()
         self.load_csv(csv_path)
-        self.init_polygons(self.skeleton_definition.body_sections, self.csv_marker_names)
+        self.init_polygons(self.csv_marker_names)
 
     def load_csv(self, csv_path: str):
         """
@@ -106,6 +106,26 @@ class Hawk3D(Animal3D):
         # Convert string data to float and reshape
         keypoints = data[1:].astype(float)  # Skip the first row (header)
         keypoints = keypoints.reshape(-1, 3)  # [n, 3]
+        return keypoints
+
+    def validate_keypoints(self, keypoints):
+        """
+        Validates the keypoints, ensuring they are three-dimensional, reshapes them if necessary,
+        and mirrors them if only one side is provided.
+
+        Parameters:
+        - keypoints (numpy.ndarray): The keypoints array to validate.
+
+        Returns:
+        - numpy.ndarray: The validated, potentially reshaped, and mirrored keypoints.
+        """
+        # First, perform basic validation from Animal3D
+        keypoints = super().validate_keypoints(keypoints)
+
+        # Check if only one side is given and mirror if necessary
+        if keypoints.shape[1] == len(self.skeleton_definition.get_right_marker_names()):
+            keypoints = self.mirror_keypoints(keypoints)
+
         return keypoints
 
     def validate_polygon_shape(self):
