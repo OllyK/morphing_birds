@@ -18,6 +18,7 @@ class Hawk3D(Animal3D):
         """
         skeleton_definition = HawkSkeletonDefinition()
         super().__init__(skeleton_definition)
+        self.marker_names = self.skeleton_definition.marker_names
         self.right_marker_names = self.skeleton_definition.get_right_marker_names()
         self.left_marker_names = self.skeleton_definition.get_left_marker_names()
         self.load_csv(csv_path)
@@ -46,11 +47,9 @@ class Hawk3D(Animal3D):
 
             # Load and validate keypoints
             keypoints = self.get_csv_keypoints(data)
-            self.validate_keypoints(keypoints)
+            validated_keypoints = self.validate_keypoints(keypoints)
 
-            print(keypoints.shape)
-
-            self.default_shape = keypoints[0]
+            self.default_shape = validated_keypoints
             self.current_shape = self.default_shape.copy()
             self.untransformed_shape = self.default_shape.copy()
         

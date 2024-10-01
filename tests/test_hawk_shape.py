@@ -25,7 +25,7 @@ class TestHawk3D(unittest.TestCase):
         # Test if polygons are initialized correctly
         for section, markers in self.hawk3d.skeleton_definition.body_sections.items():
             indices = self.hawk3d.polygons[section]
-            expected_indices = self.hawk3d.get_keypoint_indices(markers)
+            expected_indices = self.hawk3d.skeleton_definition.get_marker_indices(markers, self.hawk3d.csv_marker_names)
             self.assertEqual(indices, expected_indices)
 
     def test_get_polygon_coords(self):

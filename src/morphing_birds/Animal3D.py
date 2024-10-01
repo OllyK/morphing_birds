@@ -115,8 +115,9 @@ class Animal3D:
             raise ValueError(f"Section name '{section_name}' not recognized.")
 
         indices = self.polygons[section_name]
-        coords = self.current_shape[0,indices, :]
+        coords = self.current_shape[0, indices, :]
         return coords
+        
 
     def validate_keypoints(self, keypoints):
         """
@@ -136,9 +137,9 @@ class Animal3D:
         if keypoints.shape[-1] != 3:
             raise ValueError("Keypoints must be in 3D space.")
         
-        expected_markers = len(self.skeleton_definition.marker_names) + len(self.skeleton_definition.fixed_marker_names)
-        if keypoints.shape[0] != expected_markers:
-            raise ValueError(f"Expected {expected_markers} markers, but got {keypoints.shape[0]}.")
+        # expected_markers = len(self.skeleton_definition.marker_names)
+        # if keypoints.shape[0] != expected_markers:
+        #     raise ValueError(f"Expected {expected_markers} markers, but got {keypoints.shape[0]}.")
 
         # If [4,3] or [8,3] is given, reshape to [1,4,3] or [1,8,3]
         if len(np.shape(keypoints)) == 2:

@@ -11,7 +11,7 @@ from PIL import Image
 import ipywidgets as widgets
 from IPython.display import display, clear_output
 
-from .PlotterHelpers import get_plot3d_view, plot_settings, plot_sections, plot_keypoints
+from .PlotterHelpers import get_plot3d_view, plot_settings, plot_sections, plot_keypoints, save_plot_as_image
 
 def plot(animal3d_instance, ax=None, el=20, az=60, colour=None, alpha=0.3, axisOn=True):
 
