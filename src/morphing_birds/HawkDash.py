@@ -9,14 +9,13 @@ from timeit import default_timer as timer
 from dash import callback_context
 from dash.exceptions import PreventUpdate
 
-from morphing_birds import Hawk3D
-
-# Initialize Hawk3D
-hawk3d = Hawk3D("../data/mean_hawk_shape.csv")
-hawk3d.restore_keypoints_to_average()
-
 
 def create_dash_app(new_keypoints=None, mean_scores=None, binned_horzDist=None):
+    from morphing_birds import Hawk3D
+    # Initialize Hawk3D
+    hawk3d = Hawk3D("../data/mean_hawk_shape.csv")
+    hawk3d.restore_keypoints_to_average()
+
 
     # Generate fake keypoints and mean scores data for testing purposes
     if new_keypoints is None:
@@ -318,7 +317,7 @@ def plot_keypoints_plotly(fig, Hawk3D_instance, colour='black', alpha=1):
     return fig
 
 def plot_sections_plotly(fig, Hawk3D_instance, colour, alpha=1):
-    for section in Hawk3D_instance.body_sections.keys():
+    for section in Hawk3D_instance.skeleton_definition.body_sections.keys():
         mesh, lines = get_polygon_plotly(Hawk3D_instance, section, colour, alpha)
         fig.add_trace(mesh)
         fig.add_trace(lines)
@@ -326,7 +325,7 @@ def plot_sections_plotly(fig, Hawk3D_instance, colour, alpha=1):
     return fig
 
 def get_polygon_plotly(Hawk3D_instance, section_name, colour, alpha=1):
-    if section_name not in Hawk3D_instance.body_sections.keys():
+    if section_name not in Hawk3D_instance.skeleton_definition.body_sections.keys():
         raise ValueError(f"Section name {section_name} not recognised.")
 
     # You can modify these functions to customize colour and alpha

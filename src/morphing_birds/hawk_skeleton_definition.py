@@ -21,7 +21,12 @@ class HawkSkeletonDefinition(SkeletonDefinition):
             "head": ["right_shoulder", "hood", "left_shoulder"],
             "tail": ["right_tailtip", "left_tailtip", "left_tailbase", "right_tailbase"],
         }
+
         super().__init__(marker_names, fixed_marker_names, body_sections)
 
+
     def get_all_marker_names(self):
+        """
+        Returns a list of all marker names from the skeleton definition.
+        """
         return self.marker_names + self.fixed_marker_names
