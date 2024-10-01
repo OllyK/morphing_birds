@@ -30,3 +30,15 @@ class HawkSkeletonDefinition(SkeletonDefinition):
         Returns a list of all marker names from the skeleton definition.
         """
         return self.marker_names + self.fixed_marker_names
+
+    def get_right_marker_names(self):
+        """
+        Returns a list of all right side marker names from the skeleton definition.
+        """
+        return [name for name in self.marker_names if "right" in name]
+    
+    def get_left_marker_names(self):
+        """
+        Returns a list of all left side marker names from the skeleton definition.
+        """
+        return [name for name in self.marker_names if "left" in name]

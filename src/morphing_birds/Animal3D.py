@@ -61,37 +61,42 @@ class Animal3D:
         self.origin = np.zeros(3)
 
 
-    def define_indices(self):
+    def define_indices(self, csv_marker_names):
         """
-        Defines and assigns marker indices for moving, fixed, right, and left markers based on csv_marker_names.
+        Defines marker indices for moving, fixed, right, and left markers based on CSV marker names.
+
+        Parameters:
+        - csv_marker_names (list): List of marker names from the CSV in order.
         """
-        # Retrieve fixed and moving marker indices from SkeletonDefinition
+        # Define moving markers
         self.marker_index = self.skeleton_definition.get_marker_indices(
-            self.skeleton_definition.marker_names,
-            self.csv_marker_names
-        )
-        self.fixed_marker_index= self.skeleton_definition.get_marker_indices(
-            self.skeleton_definition.fixed_marker_names,
-            self.csv_marker_names
+            self.skeleton_definition.marker_names, csv_marker_names
         )
 
-        # Retrieve right and left marker indices
+        # Define fixed markers
+        self.fixed_marker_index = self.skeleton_definition.get_marker_indices(
+            self.skeleton_definition.fixed_marker_names, csv_marker_names
+        )
+
+        # Define right markers
         self.right_marker_index = self.skeleton_definition.get_marker_indices(
-            self.skeleton_definition.get_right_marker_names(),
-            self.csv_marker_names
-        )
-        self.left_marker_index = self.skeleton_definition.get_marker_indices(
-            self.skeleton_definition.get_left_marker_names(),
-            self.csv_marker_names
+            self.skeleton_definition.get_right_marker_names(), csv_marker_names
         )
 
-    def init_polygons(self):
+        # Define left markers
+        self.left_marker_index = self.skeleton_definition.get_marker_indices(
+            self.skeleton_definition.get_left_marker_names(), csv_marker_names
+        )
+
+    def init_polygons(self, body_sections, csv_marker_names):
         """
         Initializes polygon definitions based on body sections and their corresponding marker indices.
         """
+        self.body_section_indices = self.skeleton_definition.get_body_section_indices(csv_marker_names)
         self.polygons = {}
         for section, indices in self.body_section_indices.items():
             self.polygons[section] = indices
+
 
     def get_polygon_coords(self, section_name: str) -> np.ndarray:
         """

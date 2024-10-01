@@ -18,6 +18,8 @@ class Hawk3D(Animal3D):
         """
         skeleton_definition = HawkSkeletonDefinition()
         super().__init__(skeleton_definition)
+        self.right_marker_names = self.skeleton_definition.get_right_marker_names()
+        self.left_marker_names = self.skeleton_definition.get_left_marker_names()
         self.load_csv(csv_path)
         self.init_polygons(self.skeleton_definition.body_sections, self.csv_marker_names)
 
@@ -33,25 +35,27 @@ class Hawk3D(Animal3D):
         - ValueError: If keypoints data is invalid.
         """
         try:
-            data = np.genfromtxt(csv_path, delimiter=',', dtype=str)
-            if data.ndim == 1:
-                data = data.reshape(1, -1)
+            # Load the data
+            data = self.load_csv_data(csv_path)
+            
             csv_headers = data[0]
             self.csv_marker_names = self.get_csv_marker_names(csv_headers)
 
             # Define marker indices based on CSV marker names
-            self.define_indices()
+            self.define_indices(self.csv_marker_names)
 
             # Load and validate keypoints
-            keypoints = self.load_csv_data(data)
+            keypoints = self.get_csv_keypoints(data)
             self.validate_keypoints(keypoints)
 
             self.default_shape = keypoints[0]
             self.current_shape = self.default_shape.copy()
             self.untransformed_shape = self.default_shape.copy()
         
-        except Exception as e:
+        except IOError as e:
             raise IOError(f"Error loading CSV file: {e}")
+        except ValueError as e:
+            raise ValueError(f"Invalid keypoints data: {e}")
     
     def load_csv_data(self, csv_path):
         """
