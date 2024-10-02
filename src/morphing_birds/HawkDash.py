@@ -319,7 +319,8 @@ def plot_keypoints_plotly(fig, Hawk3D_instance, colour='black', alpha=1):
 def plot_sections_plotly(fig, Hawk3D_instance, colour, alpha=1):
     for section in Hawk3D_instance.skeleton_definition.body_sections.keys():
         mesh, lines = get_polygon_plotly(Hawk3D_instance, section, colour, alpha)
-        fig.add_trace(mesh)
+        if mesh is not None:
+            fig.add_trace(mesh)
         fig.add_trace(lines)
 
     return fig
@@ -336,8 +337,11 @@ def get_polygon_plotly(Hawk3D_instance, section_name, colour, alpha=1):
     coords = Hawk3D_instance.get_polygon_coords(section_name)
 
     # Construct a mesh plotly object
-    mesh = go.Mesh3d(
-        x=coords[:, 0], y=coords[:, 1], z=coords[:, 2],
+    if "leg" in section_name:
+        mesh = None
+    else:
+        mesh = go.Mesh3d(
+            x=coords[:, 0], y=coords[:, 1], z=coords[:, 2],
         color=colour, opacity=alpha, hoverinfo='none'
     )
 
@@ -382,8 +386,9 @@ def plot_settings_plotly(fig, origin):
      
 
     # Axis Ranges and Grid Customization
-    axis_range = [-0.35, 0.35]
-    tickvals = np.linspace(-0.2, 0.2, 3)
+    # axis_range = [-0.35, 0.35]
+    axis_range = [-0.05, 0.05]
+    tickvals = np.linspace(-0.03, 0.03, 3)
     
     fig.update_layout(
         scene=dict(
@@ -422,7 +427,8 @@ def plot_settings_plotly(fig, origin):
     )
 
     # Updating axis limits based on custom 'origin' and 'increment'
-    increment = 0.35
+    # increment = 0.35
+    increment = 0.035
 
     fig.update_layout(scene_aspectmode='cube')
     fig.update_layout(scene=dict(
