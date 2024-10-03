@@ -1,8 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import plotly.graph_objs as go
 
 from .AnimalPlotter import plot
 from .PlotterHelpers import get_plot3d_view, plot_settings
+from .HawkDash import plot_keypoints_plotly, plot_sections_plotly, plot_settings_plotly
 
 def animate(animal3d_instance, 
                 keypoints_frames, 
@@ -207,6 +210,86 @@ def animate_compare(animal3d_instance,
 
 
 
+def animate_plotly(animal3d_instance, 
+                   keypoints_frames,
+                   alpha=0.3, 
+                   colour=None, 
+                   horzDist_frames=None, 
+                   bodypitch_frames=None, 
+                   vertDist_frames=None):
+    """
+    Create an animated 3D plot of a hawk video using Plotly.
+    """
+
+
+    def create_frames(animal3d_instance, keypoints_frames, horzDist_frames, vertDist_frames, bodypitch_frames, colour, alpha, fixed_range):
+        frames = []
+        for frame in range(len(keypoints_frames)):
+            animal3d_instance.reset_transformation()
+            animal3d_instance.update_keypoints(keypoints_frames[frame])
+            animal3d_instance.transform_keypoints(bodypitch=bodypitch_frames[frame],
+                                                horzDist=horzDist_frames[frame],
+                                                vertDist=vertDist_frames[frame])
+
+            fig = go.Figure()
+            fig = plot_sections_plotly(fig, animal3d_instance, colour if colour else 'lightblue', alpha)
+            fig = plot_keypoints_plotly(fig, animal3d_instance, colour='lightblue', alpha=1)
+
+            fig = plot_settings_animateplotly(fig, animal3d_instance.origin, fixed_range)
+
+            frames.append(go.Frame(data=fig.data, name=str(frame)))
+        return frames
+    
+
+    
+    # Check dimensions and mirror the keypoints if only the right is given.
+    keypoints_frames = format_keypoint_frames(animal3d_instance, keypoints_frames)
+
+    if keypoints_frames.shape[0] == 0:
+        raise ValueError("No frames to animate. Check the keypoints_frames input.")
+
+    # Find the number of frames 
+    num_frames = keypoints_frames.shape[0]
+
+
+    # Check transformation frames
+    horzDist_frames = check_transformation_frames(num_frames, horzDist_frames)
+    vertDist_frames = check_transformation_frames(num_frames, vertDist_frames)
+    bodypitch_frames = check_transformation_frames(num_frames, bodypitch_frames)
+
+    fixed_range = [-0.04, 0.04]  # Adjust these limits based on your data
+
+
+    # Create frames for the animation
+    frames = create_frames(animal3d_instance, keypoints_frames, horzDist_frames, vertDist_frames, bodypitch_frames, colour, alpha, fixed_range)
+
+    # Create the initial figure
+    initial_fig = go.Figure(data=frames[0].data)
+    initial_fig.frames = frames
+
+    initial_fig.update_layout(
+        updatemenus=[create_play_button()],
+        sliders=[create_slider(num_frames)],
+        width=800,
+        height=700,
+        margin=dict(l=50, r=50, t=100, b=100),
+        scene=dict(
+            domain=dict(x=[0, 1], y=[0.1, 1]),
+            aspectmode='cube',
+            camera=dict(
+                eye=dict(x=1.5, y=1.5, z=1.5),
+                up=dict(x=0, y=0, z=1)
+            ),
+        )
+    )
+    # # Set fixed axis limits
+    initial_fig = plot_settings_animateplotly(initial_fig, animal3d_instance.origin, fixed_range=None)
+    
+
+    return initial_fig
+
+
+
 # ....... Helper Animation Functions ........
 
 def format_keypoint_frames(animal3d_instance, keypoints_frames):
@@ -329,3 +412,95 @@ def get_camera_angles(num_frames, rotation_type, el=20, az=60):
         return el_frames, az_frames
 
 
+def plot_settings_animateplotly(fig, origin, fixed_range=None):
+    # Define axis range and tick values
+    axis_range = [-0.03, 0.03]
+    tickvals = np.linspace(-0.02, 0.02, 3)
+
+    # Function to update axis properties
+    def update_axis(axis, background_color):
+        axis.update(dict(
+            backgroundcolor=background_color,
+            gridcolor="grey",
+            showbackground=True,
+            zerolinecolor="grey",
+            range=axis_range,
+            dtick=0.1,
+            tickvals=tickvals, 
+            gridwidth=0.5
+        ))
+
+    # Update x and y axes with white background
+    for axis in [fig.layout.scene.xaxis, fig.layout.scene.yaxis]:
+        update_axis(axis, 'white')
+
+    # Update z axis with a different background colour
+    update_axis(fig.layout.scene.zaxis, 'rgba(10, 10, 10, 0.1)')
+
+    # Set fixed axis limits if provided
+    if fixed_range is not None:
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=fixed_range, tickvals=tickvals, ticktext=['-0.02', '0', '0.02']),
+            yaxis=dict(range=fixed_range, tickvals=tickvals, ticktext=['-0.02', '0', '0.02']),
+            zaxis=dict(range=fixed_range, tickvals=tickvals, ticktext=['-0.02', '0', '0.02']),
+            aspectmode='cube'
+        ))
+
+    # Set margins and aspect mode
+    fig.update_layout(
+        margin=dict(r=20, l=10, b=10, t=10),
+        scene_aspectmode='cube'
+    )
+
+    fig.update_layout(showlegend=False)
+    return fig
+
+
+def create_slider(num_frames):
+    return {
+        'active': 0,
+        'yanchor': 'top',
+        'xanchor': 'left',
+        'currentvalue': {
+            'font': {'size': 12},
+            'prefix': 'Frame:',
+            'visible': True,
+            'xanchor': 'right'
+        },
+        'transition': {'duration': 300, 'easing': 'cubic-in-out'},
+        'pad': {'b': 10, 't': 50},
+        'len': 0.9,
+        'x': 0.1,
+        'y': 0,
+        'steps': [
+            {'args': [[i], {'frame': {'duration': 300, 'redraw': True},
+                            'mode': 'immediate',
+                            'transition': {'duration': 300}}],
+            'label': str(i),
+            'method': 'animate'} for i in range(num_frames)
+        ]
+    }
+    
+def create_play_button():
+    return {
+        'buttons': [
+            {
+                'args': [None, {'frame': {'duration': 100, 'redraw': True}, 'mode': 'immediate'}],
+                'label': 'Play',
+                'method': 'animate'
+            },
+            {
+                'args': [[None], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate'}],
+                'label': 'Pause',
+                'method': 'animate'
+            }
+        ],
+        'direction': 'left',
+        'pad': {'r': 10, 't': 10},
+        'showactive': False,
+        'type': 'buttons',
+        'x': 0.1,
+        'xanchor': 'left',
+        'y': 1.1,
+        'yanchor': 'top'
+    }

@@ -91,12 +91,18 @@ def plot_settings(ax,origin):
         ax.yaxis._axinfo['grid'].update(color = 'grey', linestyle = ':',linewidth = 0.5)
         ax.zaxis._axinfo['grid'].update(color = 'grey', linestyle = ':',linewidth = 0.5)
 
-        ax.set_xlim(-0.3, 0.3)
-        ax.set_ylim(-0.3, 0.3)
-        ax.set_zlim(-0.3, 0.3)
+        # ax.set_xlim(-0.3, 0.3)
+        # ax.set_ylim(-0.3, 0.3)
+        # ax.set_zlim(-0.3, 0.3)
+
+        ax.set_xlim(-0.04, 0.04)
+        ax.set_ylim(-0.04, 0.04)
+        ax.set_zlim(-0.04, 0.04)
 
         # --- Axis Limits
-        increment = 0.28
+        # increment = 0.28
+        increment = 0.02
+
 
         ax.auto_scale_xyz(  [origin[0]-increment, origin[0]+increment], 
                             [origin[1]-increment, origin[1]+increment],
@@ -109,9 +115,13 @@ def plot_settings(ax,origin):
         ax.tick_params(axis='both', which='major', labelsize=10)
         ax.tick_params(axis='both', which='minor', labelsize=10)
 
-        ax.set_xticks(np.linspace(-0.2, 0.2, 3))
-        ax.set_yticks(np.linspace(-0.2, 0.2, 3))
-        ax.set_zticks(np.linspace(-0.2, 0.2, 3))
+        # ax.set_xticks(np.linspace(-0.2, 0.2, 3))
+        # ax.set_yticks(np.linspace(-0.2, 0.2, 3))
+        # ax.set_zticks(np.linspace(-0.2, 0.2, 3))
+
+        ax.set_xticks(np.linspace(-0.02, 0.02, 3))
+        ax.set_yticks(np.linspace(-0.02, 0.02, 3))
+        ax.set_zticks(np.linspace(-0.02, 0.02, 3))
 
         # --- Axis Equal
         ax.set_aspect('equal', 'box')

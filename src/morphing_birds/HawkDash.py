@@ -383,59 +383,40 @@ def colour_polygon_plotly(section_name, colour):
         return colour
 
 def plot_settings_plotly(fig, origin):
-     
-
-    # Axis Ranges and Grid Customization
-    # axis_range = [-0.35, 0.35]
+    # Define axis range and tick values
     axis_range = [-0.05, 0.05]
-    tickvals = np.linspace(-0.03, 0.03, 3)
-    
+    tickvals = np.linspace(-0.02, 0.02, 3)
+
+    # Function to update axis properties
+    def update_axis(axis, background_color):
+        axis.update(dict(
+            backgroundcolor=background_color,
+            gridcolor="grey",
+            showbackground=True,
+            zerolinecolor="grey",
+            range=axis_range,
+            dtick=0.1,
+            tickvals=tickvals, 
+            gridwidth=0.5
+        ))
+
+    # Update x and y axes with white background
+    for axis in [fig.layout.scene.xaxis, fig.layout.scene.yaxis]:
+        update_axis(axis, 'white')
+
+    # Update z axis with a different background colour
+    update_axis(fig.layout.scene.zaxis, 'rgba(10, 10, 10, 0.1)')
+
+    # Set margins and aspect mode
     fig.update_layout(
+        margin=dict(r=20, l=10, b=10, t=10),
+        scene_aspectmode='cube',
         scene=dict(
-            xaxis=dict(
-                backgroundcolor='white',
-                gridcolor="grey",
-                showbackground=True,
-                zerolinecolor="grey", 
-                range=axis_range,
-                dtick=0.1,
-                tickvals=tickvals, 
-                gridwidth=0.5
-            ),
-            yaxis=dict(
-                backgroundcolor="white",
-                gridcolor="grey",
-                showbackground=True,
-                zerolinecolor="grey",
-                range=axis_range,
-                dtick=0.1,
-                tickvals=tickvals, 
-                gridwidth=0.5
-            ),
-            zaxis=dict(
-                backgroundcolor="rgba(10, 10, 10, 0.1)",
-                gridcolor="grey",
-                showbackground=True,
-                zerolinecolor="grey",
-                range=axis_range,
-                dtick=0.1,
-                tickvals=tickvals, 
-                gridwidth=0.5
-            )
-        ),
-        margin=dict(r=20, l=10, b=10, t=10)
+            xaxis=dict(range=[origin[0]-0.035, origin[0]+0.035]),
+            yaxis=dict(range=[origin[1]-0.035, origin[1]+0.035]),
+            zaxis=dict(range=[origin[2]-0.035, origin[2]+0.035])
+        )
     )
-
-    # Updating axis limits based on custom 'origin' and 'increment'
-    # increment = 0.35
-    increment = 0.035
-
-    fig.update_layout(scene_aspectmode='cube')
-    fig.update_layout(scene=dict(
-        xaxis=dict(range=[origin[0]-increment, origin[0]+increment]),
-        yaxis=dict(range=[origin[1]-increment, origin[1]+increment]),
-        zaxis=dict(range=[origin[2]-increment, origin[2]+increment])
-    ))
     fig.update_layout(showlegend=False)
     return fig
 
