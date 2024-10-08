@@ -216,7 +216,8 @@ def animate_plotly(animal3d_instance,
                    colour=None, 
                    horzDist_frames=None, 
                    bodypitch_frames=None, 
-                   vertDist_frames=None):
+                   vertDist_frames=None, 
+                   score_vals=None):
     """
     Create an animated 3D plot of a hawk video using Plotly.
     """
@@ -257,7 +258,8 @@ def animate_plotly(animal3d_instance,
     vertDist_frames = check_transformation_frames(num_frames, vertDist_frames)
     bodypitch_frames = check_transformation_frames(num_frames, bodypitch_frames)
 
-    fixed_range = [-0.04, 0.04]  # Adjust these limits based on your data
+    limit = keypoints_frames.max().round(2)
+    fixed_range = [-limit, limit]  # Adjust these limits based on your data
 
 
     # Create frames for the animation
@@ -267,9 +269,15 @@ def animate_plotly(animal3d_instance,
     initial_fig = go.Figure(data=frames[0].data)
     initial_fig.frames = frames
 
+
+    if score_vals is not None:
+        slider_vals = score_vals.round(2)
+    else:
+        slider_vals = range(num_frames)
+
     initial_fig.update_layout(
         updatemenus=[create_play_button()],
-        sliders=[create_slider(num_frames)],
+        sliders=[create_slider(num_frames, slider_vals)],
         width=800,
         height=700,
         margin=dict(l=50, r=50, t=100, b=100),
@@ -283,11 +291,12 @@ def animate_plotly(animal3d_instance,
         )
     )
     # # Set fixed axis limits
-    initial_fig = plot_settings_animateplotly(initial_fig, animal3d_instance.origin, fixed_range=None)
+    initial_fig = plot_settings_animateplotly(initial_fig, 
+                                              animal3d_instance.origin, 
+                                              fixed_range=fixed_range)
     
 
     return initial_fig
-
 
 
 # ....... Helper Animation Functions ........
@@ -414,8 +423,8 @@ def get_camera_angles(num_frames, rotation_type, el=20, az=60):
 
 def plot_settings_animateplotly(fig, origin, fixed_range=None):
     # Define axis range and tick values
-    axis_range = [-0.03, 0.03]
-    tickvals = np.linspace(-0.02, 0.02, 3)
+    axis_range = fixed_range
+    tickvals = np.linspace(-fixed_range[0]//2, fixed_range[1]//2, 3)
 
     # Function to update axis properties
     def update_axis(axis, background_color):
@@ -440,9 +449,9 @@ def plot_settings_animateplotly(fig, origin, fixed_range=None):
     # Set fixed axis limits if provided
     if fixed_range is not None:
         fig.update_layout(scene=dict(
-            xaxis=dict(range=fixed_range, tickvals=tickvals, ticktext=['-0.02', '0', '0.02']),
-            yaxis=dict(range=fixed_range, tickvals=tickvals, ticktext=['-0.02', '0', '0.02']),
-            zaxis=dict(range=fixed_range, tickvals=tickvals, ticktext=['-0.02', '0', '0.02']),
+            xaxis=dict(range=fixed_range, tickvals=tickvals),
+            yaxis=dict(range=fixed_range, tickvals=tickvals),
+            zaxis=dict(range=fixed_range, tickvals=tickvals),
             aspectmode='cube'
         ))
 
@@ -456,7 +465,13 @@ def plot_settings_animateplotly(fig, origin, fixed_range=None):
     return fig
 
 
-def create_slider(num_frames):
+def create_slider(num_frames,slider_vals):
+    # Check if slider_vals is the same length as num_frames
+    if slider_vals is None:
+        slider_vals = range(num_frames)
+        if len(slider_vals) != num_frames:
+            raise ValueError("slider_vals must be the same length as num_frames.")
+    
     return {
         'active': 0,
         'yanchor': 'top',
@@ -473,11 +488,11 @@ def create_slider(num_frames):
         'x': 0.1,
         'y': 0,
         'steps': [
-            {'args': [[i], {'frame': {'duration': 300, 'redraw': True},
+            {'args': [[ii], {'frame': {'duration': 300, 'redraw': True},
                             'mode': 'immediate',
                             'transition': {'duration': 300}}],
-            'label': str(i),
-            'method': 'animate'} for i in range(num_frames)
+            'label': str(slider_vals[ii]),
+            'method': 'animate'} for ii in range(num_frames)
         ]
     }
     
