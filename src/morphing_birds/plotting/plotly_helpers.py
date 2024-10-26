@@ -14,7 +14,7 @@ def calculate_axis_limits(animal3d_instance):
     natural_size = np.max(default_max - default_min) * 1.25
     # Round to nearest order of magnitude and multiply by 0.4 for typical viewing
     base_scale = 10 ** np.floor(np.log10(natural_size))
-    view_radius = 0.4 * (natural_size*1.2)
+    view_radius = 0.5 * (natural_size*1.3)
 
     # Round to the nearest base_scale
     view_radius = np.round(view_radius / base_scale) * base_scale
