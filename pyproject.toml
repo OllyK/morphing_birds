@@ -31,7 +31,11 @@ dependencies = ["numpy",
                 "matplotlib",
                 "ipywidgets", 
                 "ipynb", 
-                'notebook==6.1.5']
+                'notebook==6.1.5', 
+                "dash",
+                "plotly",
+                "imageio"
+                ]
 
 [project.optional-dependencies]
 test = [

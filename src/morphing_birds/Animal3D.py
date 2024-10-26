@@ -241,6 +241,10 @@ class Animal3D:
         # Reset the transformation matrix
         self.reset_transformation()
 
+        # Ensure horzDist and vertDist are scalar values
+        horzDist = float(horzDist) if np.isscalar(horzDist) else float(horzDist[0])
+        vertDist = float(vertDist) if np.isscalar(vertDist) else float(vertDist[0])
+
         # Apply any translations
         self.update_translation(horzDist, vertDist)
 
@@ -254,9 +258,16 @@ class Animal3D:
 
     def update_rotation(self, degrees=0, which='x'):
         """
-        Updates the transformation matrix with a rotation around the x-axis.
+        Updates the transformation matrix with a rotation around the specified axis.
+        
+        Parameters:
+        - degrees: float or array-like, rotation angle in degrees
+        - which: str, axis of rotation ('x', 'y', or 'z')
         """
+        # Ensure degrees is a scalar value
+        degrees = float(degrees) if np.isscalar(degrees) else float(degrees[0])
         radians = np.deg2rad(degrees)
+        
         if which == "x":
             rotation_matrix = np.array([
                 [1,0,0,0],
@@ -279,21 +290,18 @@ class Animal3D:
                 [0,0,0,1]
             ])
 
-        # rotation_matrix = np.array([
-        #     [1,0,0,0],
-        #     [0, np.cos(radians), -np.sin(radians), 0],
-        #     [0, np.sin(radians),  np.cos(radians), 0],
-        #     [0,0,0,1]
-        # ])
-
         self.transformation_matrix = self.transformation_matrix @ rotation_matrix
 
 
 
-    def update_translation(self,horzDist=0, vertDist=0):
+    def update_translation(self, horzDist=0, vertDist=0):
         """
         Updates the transformation matrix with horizontal and vertical translations.
         """
+        # Ensure horzDist and vertDist are scalar values
+        horzDist = float(horzDist) if np.isscalar(horzDist) else float(horzDist[0])
+        vertDist = float(vertDist) if np.isscalar(vertDist) else float(vertDist[0])
+
         translation_matrix = np.array([
             [1,0,0,0],
             [0,1,0,horzDist],
@@ -303,7 +311,9 @@ class Animal3D:
         self.transformation_matrix = self.transformation_matrix @ translation_matrix
 
         # Update origin
-        self.origin = [0, horzDist, vertDist]
+        # self.origin = [0, horzDist, vertDist]
+        self.origin = self.origin + np.array([0, horzDist, vertDist])
+        
 
     def apply_transformation(self):
 
@@ -333,6 +343,18 @@ class Animal3D:
 
         # Also update the origin
         self.origin = np.array([0,0,0])
+
+    
+    def get_bounding_box(self):
+        """
+        Calculates the bounding box of the current shape.
+
+        Returns:
+        - tuple: (min_coords, max_coords) representing the bounding box.
+        """
+        min_coords = self.current_shape.min(axis=(0, 1))
+        max_coords = self.current_shape.max(axis=(0, 1))
+        return min_coords, max_coords
 
     @property
     def markers(self):
@@ -395,7 +417,11 @@ class Animal3D:
         return self.default_shape[:,left_marker_index,:]
 
 
-     
+    
+
+
 
 # ----- Plot Functions -----
  
+
+
