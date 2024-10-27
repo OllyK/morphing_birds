@@ -82,6 +82,10 @@ class Animal3D:
         self.transformation_matrix = np.identity(4)
         self.origin = np.zeros(3)
 
+        # Add scaling factor attribute with default of no scaling
+        self.fixed_marker_scaling = np.ones(3)
+
+
 
     def define_indices(self, csv_marker_names):
         """
@@ -241,6 +245,9 @@ class Animal3D:
         # Reset the transformation matrix
         self.reset_transformation()
 
+        # Rescale the fixed markers
+        self.apply_fixed_marker_scaling()
+
         # Ensure horzDist and vertDist are scalar values
         horzDist = float(horzDist) if np.isscalar(horzDist) else float(horzDist[0])
         vertDist = float(vertDist) if np.isscalar(vertDist) else float(vertDist[0])
@@ -250,7 +257,6 @@ class Animal3D:
 
         # Apply any rotations
         self.update_rotation(bodypitch)
-
         self.update_rotation(yaw, which='z')
 
         # Apply the transformation
@@ -356,6 +362,27 @@ class Animal3D:
         max_coords = self.current_shape.max(axis=(0, 1))
         return min_coords, max_coords
 
+    def set_fixed_marker_scaling(self, scaling_factors):
+        """
+        Sets the scaling factors for fixed markers.
+
+        Parameters:
+        - scaling_factors (numpy.ndarray): Array of scaling factors [x, y, z]
+            Must be a 3-element array corresponding to x, y, z dimensions.
+        """
+        if not isinstance(scaling_factors, np.ndarray) or scaling_factors.shape != (3,):
+            raise ValueError("scaling_factors must be a numpy array with shape (3,)")
+        
+        self.fixed_marker_scaling = scaling_factors
+
+      
+    def apply_fixed_marker_scaling(self):
+        """
+        Applies the current fixed marker scaling to the untransformed shape.
+        """
+        self.current_shape[:, self.fixed_marker_index, :] /= self.fixed_marker_scaling
+    
+    
     @property
     def markers(self):
         """
@@ -417,7 +444,13 @@ class Animal3D:
         return self.default_shape[:,left_marker_index,:]
 
 
-    
+    @property
+    def fixed_markers(self):
+        """
+        Returns the fixed markers.
+        """
+        return self.current_shape[:,self.fixed_marker_index,:]
+
 
 
 
