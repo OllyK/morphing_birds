@@ -65,7 +65,8 @@ def colour_polygon(section_name, colour):
         if "handwing" in section_name or "tail" in section_name:
             colour = colour
         else:
-            colour = np.array((0.5, 0.5, 0.5, 0.5))
+            # colour = np.array((0.5, 0.5, 0.5, 0.5)) 
+            colour = colour
     
         return colour
 

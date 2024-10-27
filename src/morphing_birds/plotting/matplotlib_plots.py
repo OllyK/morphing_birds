@@ -1,6 +1,5 @@
 
-
-
+import numpy as np
 import matplotlib.pyplot as plt
 import ipywidgets as widgets
 from IPython.display import display, clear_output
@@ -133,14 +132,14 @@ def plot_multiple(animal3d_instance, keypoints, num_plots, spacing = (0.4, 0.7),
     # Set axis equal
     ax.set_aspect('equal', 'box')
     # Remove axes entirely and just leave polygons
-    # ax.axis('off')
+    ax.axis('off')
     # Make grid area white
             # --- Panel Shading
-    ax.xaxis.pane.fill = False
-    ax.yaxis.pane.fill = False
-    ax.xaxis.pane.set_edgecolor('w')
-    ax.yaxis.pane.set_edgecolor('w')
-    ax.zaxis.pane.set_edgecolor('k')
+    # ax.xaxis.pane.fill = False
+    # ax.yaxis.pane.fill = False
+    # ax.xaxis.pane.set_edgecolor('w')
+    # ax.yaxis.pane.set_edgecolor('w')
+    # ax.zaxis.pane.set_edgecolor('k')
 
     ax.set_xticklabels([])
     ax.set_yticklabels([])
