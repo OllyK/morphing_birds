@@ -5,13 +5,18 @@ import numpy as np
 
 def calculate_axis_limits(animal3d_instance):
     """
-    Calculate axis limits based on the animal's natural size and bounding box.
+    Calculate axis limits based on the animal's natural size and bounding box,
+    taking into account fixed marker scaling.
     """
-
-    
     # Get the natural size of the animal from its default shape
-    default_min, default_max = animal3d_instance.default_shape.min(axis=(0, 1)), animal3d_instance.default_shape.max(axis=(0, 1))
+    default_shape = animal3d_instance.default_shape.copy()
+    
+    # Apply scaling to fixed markers in the default shape
+    default_shape[:, animal3d_instance.fixed_marker_index, :] /= animal3d_instance.fixed_marker_scaling
+    
+    default_min, default_max = default_shape.min(axis=(0, 1)), default_shape.max(axis=(0, 1))
     natural_size = np.max(default_max - default_min) * 1.25
+    
     # Round to nearest order of magnitude and multiply by 0.4 for typical viewing
     base_scale = 10 ** np.floor(np.log10(natural_size))
     view_radius = 0.5 * (natural_size*1.3)
