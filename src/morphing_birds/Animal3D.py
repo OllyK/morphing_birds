@@ -253,15 +253,20 @@ class Animal3D:
             self.apply_fixed_marker_scaling()
 
         # Ensure horzDist and vertDist are scalar values
-        horzDist = float(horzDist) if np.isscalar(horzDist) else float(horzDist[0])
-        vertDist = float(vertDist) if np.isscalar(vertDist) else float(vertDist[0])
+        if horzDist is not None:
+            horzDist = float(horzDist) if np.isscalar(horzDist) else float(horzDist[0])
+        if vertDist is not None:    
+            vertDist = float(vertDist) if np.isscalar(vertDist) else float(vertDist[0])
 
         # Apply any translations
-        self.update_translation(horzDist, vertDist)
+        if horzDist is not None or vertDist is not None:
+            self.update_translation(horzDist, vertDist)
 
         # Apply any rotations
-        self.update_rotation(bodypitch)
-        self.update_rotation(yaw, which='z')
+        if bodypitch is not None:
+            self.update_rotation(bodypitch)
+        if yaw is not None:
+            self.update_rotation(yaw, which='z')
 
         # Apply the transformation
         self.apply_transformation()

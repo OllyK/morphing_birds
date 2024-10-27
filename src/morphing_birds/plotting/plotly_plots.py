@@ -1,19 +1,44 @@
-
 import numpy as np
 import plotly.graph_objs as go
 
 from .plotly_helpers import calculate_axis_limits
 
-def plot_plotly(Hawk3D_instance, colour='lightblue', alpha=0.3, axisOn=True):
-    # Create a new 3D Plotly figure
-    fig = go.Figure()
+def plot_plotly(Hawk3D_instance, colour='lightblue', alpha=0.3, axisOn=True,
+                horzDist=None, vertDist=None, bodypitch=None):
+    """
+    Create a static 3D plot of a hawk using Plotly.
+    
+    Parameters:
+    -----------
+    Hawk3D_instance : Animal3D
+        Instance of the Animal3D class
+    colour : str, optional
+        Colour for the plot
+    alpha : float, optional
+        Transparency of the plot
+    axisOn : bool, optional
+        Whether to show axes
+    horzDist : float, optional
+        Horizontal distance transformation
+    vertDist : float, optional
+        Vertical distance transformation
+    bodypitch : float, optional
+        Body pitch transformation
+    """
+    # Store the current state
+    current_state = Hawk3D_instance.current_shape.copy()
+    current_scaling = Hawk3D_instance.fixed_marker_scaling.copy()
 
-    # Plot sections and keypoints
+    # Apply transformations if provided
+    Hawk3D_instance.reset_transformation()
+    Hawk3D_instance.transform_keypoints(bodypitch=bodypitch,
+                                      horzDist=horzDist,
+                                      vertDist=vertDist)
+
+    # Create plot
+    fig = go.Figure()
     fig = plot_sections_plotly(fig, Hawk3D_instance, colour, alpha)
     fig = plot_keypoints_plotly(fig, Hawk3D_instance, colour, alpha)
-
-    # Update camera view
-    # fig.update_layout(scene_camera=dict(eye=dict(x=az, y=el, z=20)))
 
     # Set axis visibility
     if not axisOn:
@@ -23,9 +48,11 @@ def plot_plotly(Hawk3D_instance, colour='lightblue', alpha=0.3, axisOn=True):
             zaxis=dict(visible=False)
         ))
     
-    origin = Hawk3D_instance.origin
-    fig = plot_settings_plotly(fig,Hawk3D_instance)
+    fig = plot_settings_plotly(fig, Hawk3D_instance)
 
+    # Restore the original state
+    Hawk3D_instance.current_shape = current_state
+    Hawk3D_instance.set_fixed_marker_scaling(current_scaling)
 
     return fig
 
