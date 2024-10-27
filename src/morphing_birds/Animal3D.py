@@ -233,20 +233,24 @@ class Animal3D:
         # Save the untransformed shape
         self.untransformed_shape = self.current_shape.copy()
 
-        # Apply transformations
-        self.apply_transformation()
+        # # Apply transformations
+        # self.apply_transformation()
 
     def transform_keypoints(self, bodypitch=0, horzDist=0, vertDist=0, yaw=0):
         """
-        Transforms the keypoints by rotating them around the body pitch, 
-        and translating them by the horizontal and vertical distances.
+        Transforms the keypoints by applying scaling to fixed markers,
+        rotating around the body pitch, and translating by the horizontal 
+        and vertical distances.
         """
-
         # Reset the transformation matrix
         self.reset_transformation()
 
-        # Rescale the fixed markers
-        self.apply_fixed_marker_scaling()
+        # Store the current scaling
+        current_scaling = self.fixed_marker_scaling.copy()
+        
+        # Apply fixed marker scaling
+        if not np.array_equal(current_scaling, np.ones(3)):
+            self.apply_fixed_marker_scaling()
 
         # Ensure horzDist and vertDist are scalar values
         horzDist = float(horzDist) if np.isscalar(horzDist) else float(horzDist[0])
@@ -335,10 +339,10 @@ class Animal3D:
 
     def reset_transformation(self):
         self.transformation_matrix = np.eye(4)
-        self.current_shape = self.untransformed_shape
-
-        # Also reset the origin
+        self.current_shape = self.untransformed_shape.copy()
+        # Reset the origin
         self.origin = np.array([0,0,0])
+
 
     def restore_keypoints_to_average(self):
         """
@@ -456,5 +460,6 @@ class Animal3D:
 
 # ----- Plot Functions -----
  
+
 
 
