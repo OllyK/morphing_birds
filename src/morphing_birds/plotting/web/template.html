@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />   <!--It is necessary to use the UTF-8 encoding with plotly graphics to get e.g. negative signs to render correctly -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+    body {
+        font-size: 16px;
+        font-family: sans-serif;
+    }
+</style>
+</head>
+
+<body>
+    <center>
+        <h1>Here's a static Plotly graph!</h1>
+        {{ static_bird_plot }}
+        <p>And here's some text after the graph.</p>
+        <h1>Here's an animated Plotly graph!</h1>
+        {{ animated_bird_plot }}
+        <p>And here's some more text after that other graph.</p>
+        <p>All needs formatting and prettifying obviously.</p>
+    </center>
+</body>
+</html>
