@@ -9,12 +9,15 @@ from .matplotlib_animate import (
 )
 from .plotly_plots import (
     plot_plotly, 
-    plot_compare_plotly
+    plot_compare_plotly,
+    plot_sections_plotly,
+    plot_keypoints_plotly,
 )
 from .plotly_animate import (
     animate_plotly, 
     animate_plotly_compare, 
-    save_plotly_animation
+    save_plotly_animation,
+    plot_settings_animateplotly,
 )
 from .dash_app import create_dash_app
 
@@ -26,6 +29,9 @@ __all__ = [
     "animate_compare",
     "plot_plotly",
     "plot_compare_plotly",
+    "plot_sections_plotly",
+    "plot_keypoints_plotly",
+    "plot_settings_animateplotly",
     "animate_plotly",
     "animate_plotly_compare",
     "save_plotly_animation",
