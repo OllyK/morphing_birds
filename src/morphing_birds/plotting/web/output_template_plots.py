@@ -19,11 +19,6 @@ from morphing_birds import (
 SCRIPT_DIR = pathlib.Path(__file__).parent.absolute()
 
 hawk3d = Hawk3D(SCRIPT_DIR.parents[3] / "data/mean_hawk_shape.csv")
-static_bird_plot = plot_plotly(hawk3d)
-hawk3d.reset_transformation()
-hawk3d.restore_keypoints_to_average()
-fake_keypoints = np.random.normal(0, 0.01, (100, 8, 3)) + hawk3d.markers
-animated_bird_plot = animate_plotly(hawk3d, fake_keypoints)
 
 
 def create_fake_pca_data(hawk3d, n_samples=50, n_components=12, n_markers=4, n_dims=3):
@@ -131,6 +126,10 @@ def create_create_components_plot(
     fig.update_layout(
         scene={
             "domain": {"x": [0.1, 0.9], "y": [0.1, 0.8]},
+            "aspectmode": 'cube',
+            "xaxis": {"range": [-0.5, 0.5], "autorange": False},
+            "yaxis": {"range": [-0.5, 0.5], "autorange": False},
+            "zaxis": {"range": [-0.5, 0.5], "autorange": False},
         },
         xaxis2={
             "domain": [0.8, 1],
@@ -294,12 +293,6 @@ components_plot = create_create_components_plot(
 )
 
 plotly_jinja_data = {
-    "static_bird_plot": static_bird_plot.to_html(
-        full_html=False, include_plotlyjs=False
-    ),
-    "animated_bird_plot": animated_bird_plot.to_html(
-        full_html=False, include_plotlyjs=False
-    ),
     "components_plot": components_plot.to_html(full_html=False, include_plotlyjs=False),
 }
 # Save the figure as an HTML file
