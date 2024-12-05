@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import plotly.graph_objects as go
 from jinja2 import Template
+from plotly.subplots import make_subplots
 from scipy.stats import ortho_group
 
 from morphing_birds import (
@@ -25,7 +26,7 @@ fake_keypoints = np.random.normal(0, 0.01, (100, 8, 3)) + hawk3d.markers
 animated_bird_plot = animate_plotly(hawk3d, fake_keypoints)
 
 
-def create_fake_pca_data(hawk3d, n_samples=25, n_components=12, n_markers=4, n_dims=3):
+def create_fake_pca_data(hawk3d, n_samples=50, n_components=12, n_markers=4, n_dims=3):
     # Simulate the mean shape of the hawk (mu)
     mu = hawk3d.left_markers.copy()
 
@@ -90,7 +91,7 @@ def reconstruct_frames(
 # Parameters
 alpha = 0.3
 colour = "lightblue"
-n_frames = 25
+n_frames = 50
 n_markers = 4  # Define the number of markers
 n_dims = 3  # Define the number of dimensions
 # Define the predefined combinations
@@ -115,11 +116,36 @@ def create_create_components_plot(
     predefined_combinations,
     principal_components,
     score_frames,
-    n_frames=25,
+    n_frames=50,
     alpha=0.3,
     colour="lightblue",
 ):
+    # Initialize the figure with subplots
+    fig = make_subplots(
+        rows=1,
+        cols=1,
+        specs=[[{"type": "scene"}]],
+    )
+
+    # Define the domains for the main plot and the inset plot
+    fig.update_layout(
+        scene={
+            "domain": {"x": [0.1, 0.9], "y": [0.1, 0.8]},
+        },
+        xaxis2={
+            "domain": [0.8, 1],
+            "anchor": "y2",
+        },
+        yaxis2={
+            "domain": [0.8, 1],
+            "anchor": "x2",
+        },
+        showlegend=False,
+    )
+
     all_frames = []
+    initial_combo_name = predefined_combinations[0]["label"]
+    initial_components = predefined_combinations[0]["components"]
     for combo in predefined_combinations:
         components_list = combo["components"]
         reconstructed_frames = reconstruct_frames(
@@ -129,29 +155,81 @@ def create_create_components_plot(
             principal_components,
             score_frames,
         )
+
+        # Prepare data for the line plot (component value vs. time)
+        component_scores = score_frames[
+            :, components_list[0]
+        ]  # Assuming one component at a time
+
+        # Center the scores around zero
+        component_scores_centered = component_scores - np.mean(component_scores)
+
+        # Calculate global min and max for y-axis of the line plot
+        y_min = component_scores_centered.min()
+        y_max = component_scores_centered.max()
+
         frames = []
         for i in range(n_frames):
             hawk3d.reset_transformation()
             hawk3d.update_keypoints(reconstructed_frames[i])
-            fig = go.Figure()
-            fig = plot_sections_plotly(fig, hawk3d, colour=colour, alpha=alpha)
-            fig = plot_keypoints_plotly(fig, hawk3d, colour=colour, alpha=1)
-            fig = plot_settings_animateplotly(fig, hawk3d)
+
+            # Create the main 3D plot data
+            scatter3d = go.Figure()
+            scatter3d = plot_sections_plotly(
+                scatter3d, hawk3d, colour=colour, alpha=alpha
+            )
+            scatter3d = plot_keypoints_plotly(scatter3d, hawk3d, colour=colour, alpha=1)
+            scatter3d = plot_settings_animateplotly(scatter3d, hawk3d)
+            scatter3d_traces = scatter3d.data
+            scatter3d_layout = scatter3d.layout
+
+            # Create the line plot data
+            line_plot = go.Scatter(
+                x=np.arange(n_frames),
+                y=component_scores_centered,
+                mode="lines",
+                xaxis="x2",
+                yaxis="y2",
+                showlegend=False,
+                line={"color": "blue"},
+            )
+
+            # Add a marker to indicate the current frame
+            current_frame_marker = go.Scatter(
+                x=[i],
+                y=[component_scores_centered[i]],
+                mode="markers",
+                xaxis="x2",
+                yaxis="y2",
+                marker={"color": "red", "size": 10},
+                showlegend=False,
+            )
+
+            frame_data = [*list(scatter3d_traces), line_plot, current_frame_marker]
+
+            # Create the frame
             frames.append(
                 go.Frame(
-                    data=fig.data, layout=fig.layout, name=f"{combo['label']}_frame_{i}"
+                    data=frame_data,
+                    name=f"{combo['label']}_frame_{i}",
+                    layout=scatter3d_layout,
                 )
             )
+
         all_frames.extend(frames)
 
-    initial_combo_name = predefined_combinations[0]["label"]
-    initial_frames = [
-        frame for frame in all_frames if frame.name.startswith(f"{initial_combo_name}_")
-    ]
+        # Save initial data for the first frame
+        if combo["label"] == initial_combo_name:
+            initial_data = [*frames[0].data]
+            initial_y_min = y_min
+            initial_y_max = y_max
 
-    initial_fig = go.Figure(data=initial_frames[0].data)
-    initial_fig.frames = all_frames
+    for i_data in initial_data:
+        fig.add_trace(i_data)
 
+    fig.frames = all_frames
+
+    # Create buttons for component selection
     buttons = []
     for combo in predefined_combinations:
         frame_names = [f"{combo['label']}_frame_{i}" for i in range(n_frames)]
@@ -170,19 +248,44 @@ def create_create_components_plot(
         }
         buttons.append(button)
 
-    initial_fig.update_layout(
+    # Update layout with buttons and sliders
+    fig.update_layout(
         updatemenus=[
             {
                 "type": "buttons",
                 "buttons": buttons,
                 "x": 0,
-                "y": 1.15,
+                "y": 0.8,
                 "showactive": True,
             }
-        ]
+        ],
+        width=800,
+        height=700,
+        margin={"l": 50, "r": 100, "t": 300, "b": 50},
     )
 
-    return initial_fig
+    # Adjust axes for the inset plot
+    fig.update_layout(
+        xaxis2={
+            "domain": [0.8, 0.95],
+            "anchor": "y2",
+            "showgrid": False,
+            "zeroline": True,
+            "showticklabels": True,
+            "title": "Frame",
+        },
+        yaxis2={
+            "domain": [0.8, 0.95],
+            "anchor": "x2",
+            "showgrid": False,
+            "zeroline": True,
+            "showticklabels": True,
+            "title": "Component Value",
+            "range": [initial_y_min, initial_y_max],
+        },
+    )
+
+    return fig
 
 
 # Call the function to create the animated figure
@@ -197,9 +300,7 @@ plotly_jinja_data = {
     "animated_bird_plot": animated_bird_plot.to_html(
         full_html=False, include_plotlyjs=False
     ),
-     "components_plot": components_plot.to_html(
-          full_html=False, include_plotlyjs=False
-     ),
+    "components_plot": components_plot.to_html(full_html=False, include_plotlyjs=False),
 }
 # Save the figure as an HTML file
 with (SCRIPT_DIR / "index.html").open("w", encoding="utf-8") as output_file, (
