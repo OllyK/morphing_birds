@@ -21,7 +21,7 @@ SCRIPT_DIR = pathlib.Path(__file__).parent.absolute()
 hawk3d = Hawk3D(SCRIPT_DIR.parents[3] / "data/mean_hawk_shape.csv")
 
 
-def create_fake_pca_data(hawk3d, n_samples=50, n_components=12, n_markers=4, n_dims=3):
+def create_fake_pca_data(hawk3d, n_samples=20, n_components=12, n_markers=4, n_dims=3):
     # Simulate the mean shape of the hawk (mu)
     mu = hawk3d.left_markers.copy()
 
@@ -86,7 +86,7 @@ def reconstruct_frames(
 # Parameters
 alpha = 0.3
 colour = "lightblue"
-n_frames = 50
+n_frames = 20
 n_markers = 4  # Define the number of markers
 n_dims = 3  # Define the number of dimensions
 # Define the predefined combinations
@@ -111,7 +111,7 @@ def create_create_components_plot(
     predefined_combinations,
     principal_components,
     score_frames,
-    n_frames=50,
+    n_frames=20,
     alpha=0.3,
     colour="lightblue",
 ):
@@ -238,7 +238,7 @@ def create_create_components_plot(
             "args": [
                 frame_names,
                 {
-                    "frame": {"duration": 50, "redraw": True},
+                    "frame": {"duration": 100, "redraw": True},
                     "mode": "immediate",
                     "transition": {"duration": 0},
                     "fromcurrent": True,
