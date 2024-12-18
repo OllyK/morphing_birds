@@ -8,9 +8,7 @@ from scipy.stats import ortho_group
 
 from morphing_birds import (
     Hawk3D,
-    animate_plotly,
     plot_keypoints_plotly,
-    plot_plotly,
     plot_sections_plotly,
     plot_settings_animateplotly,
 )
@@ -115,6 +113,9 @@ def create_create_components_plot(
     alpha=0.3,
     colour="lightblue",
 ):
+    component_buttons = []
+    play_pause_buttons = []
+    all_frames = []
     # Initialize the figure with subplots
     fig = make_subplots(
         rows=1,
@@ -126,7 +127,7 @@ def create_create_components_plot(
     fig.update_layout(
         scene={
             "domain": {"x": [0.1, 0.9], "y": [0.1, 0.8]},
-            "aspectmode": 'cube',
+            "aspectmode": "cube",
             "xaxis": {"range": [-0.5, 0.5], "autorange": False},
             "yaxis": {"range": [-0.5, 0.5], "autorange": False},
             "zaxis": {"range": [-0.5, 0.5], "autorange": False},
@@ -142,10 +143,8 @@ def create_create_components_plot(
         showlegend=False,
     )
 
-    all_frames = []
     initial_combo_name = predefined_combinations[0]["label"]
-    initial_components = predefined_combinations[0]["components"]
-    for combo in predefined_combinations:
+    for idx, combo in enumerate(predefined_combinations):
         components_list = combo["components"]
         reconstructed_frames = reconstruct_frames(
             components_list,
@@ -204,16 +203,32 @@ def create_create_components_plot(
                 showlegend=False,
             )
 
-            frame_data = [*list(scatter3d_traces), line_plot, current_frame_marker]
-
-            # Create the frame
-            frames.append(
-                go.Frame(
-                    data=frame_data,
-                    name=f"{combo['label']}_frame_{i}",
-                    layout=scatter3d_layout,
-                )
+            # Set frame-specific layout updates including title and y-axis label
+            frame_layout = go.Layout(
+                title={
+                    "text": f"Selected Component - {combo['label']}",
+                    "xanchor": "center",
+                    "yanchor": "top",
+                    "x": 0.5,
+                    "y": 0.9,
+                },
+                xaxis2={"title": "Frame", "domain": [0.8, 0.95], "anchor": "y2"},
+                yaxis2={
+                    "title": f"{combo['label']} value",
+                    "domain": [0.8, 0.95],
+                    "anchor": "x2",
+                },
+                scene=scatter3d.layout.scene,
             )
+
+            frame_data = [*list(scatter3d_traces), line_plot, current_frame_marker]
+            # Create the frame
+            frame = go.Frame(
+                data=frame_data,
+                name=f"{combo['label']}_frame_{i}",
+                layout=frame_layout,
+            )
+            frames.append(frame)
 
         all_frames.extend(frames)
 
@@ -229,7 +244,6 @@ def create_create_components_plot(
     fig.frames = all_frames
 
     # Create buttons for component selection
-    buttons = []
     for combo in predefined_combinations:
         frame_names = [f"{combo['label']}_frame_{i}" for i in range(n_frames)]
         button = {
@@ -245,22 +259,53 @@ def create_create_components_plot(
                 },
             ],
         }
-        buttons.append(button)
+        component_buttons.append(button)
+
+    play_pause_buttons = [
+        {
+            "args": [
+                None,
+                {"frame": {"duration": 100, "redraw": True}, "mode": "immediate"},
+            ],
+            "label": "Play All",
+            "method": "animate",
+        },
+        {
+            "args": [
+                [None],
+                {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"},
+            ],
+            "label": "Pause",
+            "method": "animate",
+        },
+    ]
 
     # Update layout with buttons and sliders
     fig.update_layout(
         updatemenus=[
             {
                 "type": "buttons",
-                "buttons": buttons,
+                "buttons": component_buttons,
                 "x": 0,
-                "y": 0.8,
+                "y": 0.9,
+                "xanchor": "left",
+                "yanchor": "top",
                 "showactive": True,
-            }
+            },
+            {
+                "type": "buttons",
+                "buttons": play_pause_buttons,
+                "x": 0,
+                "y": 0.05,
+                "xanchor": "left",
+                "direction": "left",
+                "yanchor": "bottom",
+                "showactive": True,
+            },
         ],
         width=800,
         height=700,
-        margin={"l": 50, "r": 100, "t": 300, "b": 50},
+        margin={"l": 50, "r": 100, "t": 100, "b": 50},
     )
 
     # Adjust axes for the inset plot
