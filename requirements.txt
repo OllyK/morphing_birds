@@ -3,4 +3,5 @@ plotly
 jinja2
 numpy
 scipy
-morphing_birds
+gunicorn
+-e .
