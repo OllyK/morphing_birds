@@ -19,6 +19,7 @@ SCRIPT_DIR = pathlib.Path(__file__).parent.absolute()
 
 hawk3d = Hawk3D(SCRIPT_DIR.parents[3] / "data/mean_hawk_shape.csv")
 
+
 def create_fake_pca_data(hawk3d, n_samples=20, n_components=12, n_markers=4, n_dims=3):
     mu = hawk3d.left_markers.copy()
     principal_components = ortho_group.rvs(dim=n_markers * n_dims)
@@ -39,6 +40,7 @@ def create_fake_pca_data(hawk3d, n_samples=20, n_components=12, n_markers=4, n_d
     reconstructed_frames = mu + reconstruction
     return reconstructed_frames, principal_components, score_frames, mu
 
+
 n_frames = 20
 n_components = 12
 n_markers = 4
@@ -46,9 +48,24 @@ n_dims = 3
 alpha = 0.3
 colour = "lightblue"
 
-reconstructed_frames, principal_components, score_frames, mu = create_fake_pca_data(hawk3d, n_samples=n_frames, n_components=n_components, n_markers=n_markers, n_dims=n_dims)
+reconstructed_frames, principal_components, score_frames, mu = create_fake_pca_data(
+    hawk3d,
+    n_samples=n_frames,
+    n_components=n_components,
+    n_markers=n_markers,
+    n_dims=n_dims,
+)
 
-def reconstruct_frames(selected_components, n_frames, mu, principal_components, score_frames, n_markers=4, n_dims=3):
+
+def reconstruct_frames(
+    selected_components,
+    n_frames,
+    mu,
+    principal_components,
+    score_frames,
+    n_markers=4,
+    n_dims=3,
+):
     if not selected_components:
         # No components selected, return mean shape repeated
         return np.repeat(mu[np.newaxis, :, :], n_frames, axis=0), np.zeros(n_frames)
@@ -65,6 +82,7 @@ def reconstruct_frames(selected_components, n_frames, mu, principal_components, 
     reconstruction = reconstruction.reshape(-1, n_markers, n_dims)
     frames = mu + reconstruction
     return frames, combined_scores
+
 
 def create_figure(selected_components):
     # Recompute reconstructed frames and line plot data
@@ -134,11 +152,11 @@ def create_figure(selected_components):
 
         frame_layout = go.Layout(
             title={
-                "text": f"Selected Components: {', '.join(['PC '+str(s+1) for s in selected_components]) if selected_components else 'None'}",
+                "text": f"Selected Components: {', '.join([str(s+1) for s in sorted(selected_components)]) if selected_components else 'None'}",
                 "xanchor": "center",
                 "yanchor": "top",
                 "x": 0.5,
-                "y": 0.9,
+                "y": 0.92,
             },
             xaxis2={"domain": [0.8, 0.95]},
             yaxis2={"domain": [0.8, 0.95]},
@@ -167,7 +185,12 @@ def create_figure(selected_components):
         {
             "args": [
                 None,
-                {"frame": {"duration": 100, "redraw": True}, "mode": "immediate"},
+                {
+                    "frame": {"duration": 100, "redraw": True},
+                    "mode": "immediate",
+                    "fromcurrent": True,
+                    "transition": {"duration": 0},
+                },
             ],
             "label": "Play",
             "method": "animate",
@@ -175,12 +198,45 @@ def create_figure(selected_components):
         {
             "args": [
                 [None],
-                {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"},
+                {
+                    "frame": {"duration": 0, "redraw": False},
+                    "mode": "immediate",
+                    "fromcurrent": True,
+                    "transition": {"duration": 0},
+                },
             ],
             "label": "Pause",
             "method": "animate",
         },
     ]
+
+    # -- Add slider --
+    # Create one slider with a step for each frame
+    sliders = [
+        {
+            "active": 0,
+            "currentvalue": {"prefix": "Frame: "},
+            "pad": {"b": 10, "t": 50},
+            "len": 0.9,
+            "x": 0.1,
+            "y": 0,
+            "steps": [],
+        }
+    ]
+    for i in range(n_frames):
+        slider_step = {
+            "label": str(i),
+            "method": "animate",
+            "args": [
+                [f"frame_{i}"],
+                {
+                    "frame": {"duration": 0, "redraw": True},
+                    "mode": "immediate",
+                    "transition": {"duration": 0},
+                },
+            ],
+        }
+        sliders[0]["steps"].append(slider_step)
 
     fig.update_layout(
         updatemenus=[
@@ -188,13 +244,14 @@ def create_figure(selected_components):
                 "type": "buttons",
                 "buttons": play_pause_buttons,
                 "x": 0,
-                "y": 0.05,
+                "y": 0,
                 "xanchor": "left",
                 "direction": "left",
                 "yanchor": "bottom",
                 "showactive": True,
             },
         ],
+        sliders=sliders,
         xaxis2={
             "domain": [0.8, 0.95],
             "anchor": "y2",
@@ -208,33 +265,44 @@ def create_figure(selected_components):
         },
         width=800,
         height=700,
-        margin={"l": 50, "r": 100, "t": 100, "b": 50},
+        margin={"l": 50, "r": 100, "t": 125, "b": 25},
     )
 
     return fig
 
+
 app = Dash(__name__)
 
-app.layout = html.Div([
-    html.H1("Hawk Wing PCA"),
-    html.Label("Select Principal Components:"),
-    dcc.Dropdown(
-        id="pc-dropdown",
-        options=[{"label": f"PC {i+1}", "value": i} for i in range(n_components)],
-        value=[],  # start with no PCs selected
-        multi=True,
-        style={"width": "75%"},
-    ),
-    dcc.Graph(id="graph")
-])
-
-@app.callback(
-    Output("graph", "figure"),
-    Input("pc-dropdown", "value")
+app.layout = html.Div(
+    [
+        html.H1("Hawk Wing PCA", style={"textAlign": "center", "font-family": "Arial"}),
+        html.Label(
+            "Select Principal Components:",
+            style={
+                "font-family": "Arial",
+                "display": "block",
+                "margin": "auto",
+                "width": "75%",
+                "textAlign": "left",
+            },
+        ),
+        dcc.Dropdown(
+            id="pc-dropdown",
+            options=[{"label": f"PC {i+1}", "value": i} for i in range(n_components)],
+            value=[],  # start with no PCs selected
+            multi=True,
+            style={"width": "75%", "font-family": "Arial", "margin": "auto"},
+        ),
+        dcc.Graph(id="graph", style={"width": "75%", "margin": "auto"}),
+    ]
 )
+
+
+@app.callback(Output("graph", "figure"), Input("pc-dropdown", "value"))
 def update_plot(selected_components):
     fig = create_figure(selected_components)
     return fig
+
 
 server = app.server  # For deployment
 
